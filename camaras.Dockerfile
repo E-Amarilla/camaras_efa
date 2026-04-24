@@ -22,8 +22,7 @@ RUN rm -f mediamtx.exe \
     && mv mediamtxorig.yml mediamtx.yml
 
 # Instalar dependencias de Node
-RUN npm install --save-dev concurrently \
-    && npm install next react react-dom
+RUN npm ci
 
 WORKDIR /app
 # Construir la app Next.js
@@ -31,6 +30,6 @@ WORKDIR /app
 RUN npm run build
 
 # Puerto por defecto de Next.js
-EXPOSE 3001 554 8888 8554
+EXPOSE 3001 554 8888 8554 8889
 
 CMD ["npm", "run", "start"]

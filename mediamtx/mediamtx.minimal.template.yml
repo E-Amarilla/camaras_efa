@@ -13,6 +13,8 @@ rtspTransports: [udp, multicast, tcp]
 hls: true
 hlsAddress: :8888
 hlsAllowOrigin: "*"
+# mpegts evita LL-HLS (EXT-X-PART) que Chrome maneja diferente a Firefox
+hlsVariant: mpegts
 hlsSegmentCount: 7
 hlsSegmentDuration: 1s
 

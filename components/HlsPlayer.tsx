@@ -30,22 +30,53 @@ export default function HlsPlayer({
     if (!video || !src) return;
 
     const setup = async () => {
+      // Fallback nativo para Safari
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = src;
-        video.currentTime = video.duration || 0;
+        video.play().catch(() => {});
         return;
       }
-      const Hls = (await import("hls.js")).default;
-      if (Hls.isSupported()) {
-        hls = new Hls({ lowLatencyMode: true });
-        hls.loadSource(src);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          if (video.readyState > 0) {
-            video.currentTime = video.duration || 0;
-          }
-        });
+
+      const HlsLib = (await import("hls.js")).default;
+
+      if (!HlsLib.isSupported()) {
+        onError?.();
+        return;
       }
+
+      hls = new HlsLib({
+        // MediaMTX no produce LL-HLS; lowLatencyMode: true causa fallos en Chrome
+        lowLatencyMode: false,
+        maxBufferLength: 10,
+        maxMaxBufferLength: 30,
+        enableWorker: true,
+      });
+
+      hls.loadSource(src);
+      hls.attachMedia(video);
+
+      hls.on(HlsLib.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+
+      // Manejo de errores: Chrome corta en cualquier error fatal; Firefox recupera solo.
+      hls.on(HlsLib.Events.ERROR, (_, data) => {
+        if (!data.fatal) return;
+        switch (data.type) {
+          case HlsLib.ErrorTypes.NETWORK_ERROR:
+            // Reintentar carga de red (p.ej. segmento no disponible aún)
+            hls?.startLoad();
+            break;
+          case HlsLib.ErrorTypes.MEDIA_ERROR:
+            // Recuperar codec/decodificador sin reiniciar la conexión
+            hls?.recoverMediaError();
+            break;
+          default:
+            // Error irrecuperable: notificar al padre
+            onError?.();
+            break;
+        }
+      });
     };
 
     setup();
@@ -56,9 +87,7 @@ export default function HlsPlayer({
           hls.destroy();
           hls = null;
         }
-        if (video) {
-          video.src = "";
-        }
+        video.src = "";
         setup();
       }
     };
