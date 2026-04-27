@@ -17,7 +17,7 @@ export default function CameraCard({ camera }: CameraCardProps) {
   };
 
   const handleVideoError = () => {
-    setIsLoading(false);
+    setIsLoading(true);
   };
 
   return (

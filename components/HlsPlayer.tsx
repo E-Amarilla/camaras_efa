@@ -13,6 +13,8 @@ type Props = {
   onError?: () => void;
 };
 
+const RETRY_DELAYS = [1000, 2000, 5000, 10000, 20000];
+
 export default function HlsPlayer({
   src,
   autoPlay = true,
@@ -26,13 +28,41 @@ export default function HlsPlayer({
 
   useEffect(() => {
     let hls: Hls | null = null;
+    let retryCount = 0;
+    let retryTimer: number | null = null;
     const video = videoRef.current;
     if (!video || !src) return;
 
-    const setup = async () => {
-      // Fallback nativo para Safari
+    const cleanup = () => {
+      if (retryTimer !== null) {
+        window.clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+      if (hls) {
+        hls.destroy();
+        hls = null;
+      }
+    };
+
+    const scheduleRetry = () => {
+      if (retryTimer !== null) return;
+
+      const delay =
+        RETRY_DELAYS[Math.min(retryCount, RETRY_DELAYS.length - 1)] ?? 20000;
+      retryTimer = window.setTimeout(() => {
+        retryTimer = null;
+        retryCount += 1;
+        cleanup();
+        initialize();
+      }, delay);
+    };
+
+    const initialize = async () => {
+      if (!video) return;
+
       if (video.canPlayType("application/vnd.apple.mpegurl")) {
         video.src = src;
+        video.load();
         video.play().catch(() => {});
         return;
       }
@@ -45,59 +75,61 @@ export default function HlsPlayer({
       }
 
       hls = new HlsLib({
-        // MediaMTX no produce LL-HLS; lowLatencyMode: true causa fallos en Chrome
         lowLatencyMode: false,
         maxBufferLength: 10,
         maxMaxBufferLength: 30,
         enableWorker: true,
+        startFragPrefetch: true,
       });
 
-      hls.loadSource(src);
       hls.attachMedia(video);
+      hls.on(HlsLib.Events.MEDIA_ATTACHED, () => {
+        hls?.loadSource(src);
+      });
 
       hls.on(HlsLib.Events.MANIFEST_PARSED, () => {
+        retryCount = 0;
         video.play().catch(() => {});
       });
 
-      // Manejo de errores: Chrome corta en cualquier error fatal; Firefox recupera solo.
       hls.on(HlsLib.Events.ERROR, (_, data) => {
         if (!data.fatal) return;
+
         switch (data.type) {
           case HlsLib.ErrorTypes.NETWORK_ERROR:
-            // Reintentar carga de red (p.ej. segmento no disponible aún)
-            hls?.startLoad();
+            if (retryCount < RETRY_DELAYS.length) {
+              scheduleRetry();
+            } else {
+              onError?.();
+            }
             break;
           case HlsLib.ErrorTypes.MEDIA_ERROR:
-            // Recuperar codec/decodificador sin reiniciar la conexión
             hls?.recoverMediaError();
+            scheduleRetry();
             break;
           default:
-            // Error irrecuperable: notificar al padre
             onError?.();
             break;
         }
       });
     };
 
-    setup();
-
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        if (hls) {
-          hls.destroy();
-          hls = null;
-        }
-        video.src = "";
-        setup();
+    const handleVideoElementError = () => {
+      if (retryCount < RETRY_DELAYS.length) {
+        scheduleRetry();
+      } else {
+        onError?.();
       }
     };
-    document.addEventListener("visibilitychange", handleVisibility);
+
+    video.addEventListener("error", handleVideoElementError);
+    initialize();
 
     return () => {
-      if (hls) hls.destroy();
-      document.removeEventListener("visibilitychange", handleVisibility);
+      video.removeEventListener("error", handleVideoElementError);
+      cleanup();
     };
-  }, [src]);
+  }, [src, onError]);
 
   return (
     <video
