@@ -43,8 +43,11 @@ hlsEncryption: no
 hlsAllowOrigin: "*"
 hlsTrustedProxies: []
 hlsDirectory: ""
-hlsSegmentCount: 7
-hlsSegmentDuration: 1s
+# fmp4: mejor soporte de Chrome MSE, manejo limpio de discontinuidades del DVR
+# 2s + 10 segmentos = ventana de 20s (resiste throttling de Chrome en background)
+hlsVariant: fmp4
+hlsSegmentCount: 10
+hlsSegmentDuration: 2s
 hlsPartDuration: 200ms
 hlsSegmentMaxSize: 50M
 

@@ -13,10 +13,11 @@ rtspTransports: [udp, multicast, tcp]
 hls: true
 hlsAddress: :8888
 hlsAllowOrigin: "*"
-# mpegts evita LL-HLS (EXT-X-PART) que Chrome maneja diferente a Firefox
-hlsVariant: mpegts
-hlsSegmentCount: 7
-hlsSegmentDuration: 1s
+# fmp4: mejor soporte de Chrome MSE, manejo limpio de discontinuidades del DVR
+# 2s + 10 segmentos = ventana de 20s (resiste throttling de Chrome en background)
+hlsVariant: fmp4
+hlsSegmentCount: 10
+hlsSegmentDuration: 2s
 
 # WebRTC Server (nueva sintaxis)
 webrtc: true

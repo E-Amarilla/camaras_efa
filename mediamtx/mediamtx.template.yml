@@ -228,9 +228,12 @@ hlsTrustedProxies: []
 hlsDirectory: ""
 # Number of HLS segments to keep on disk.
 # Increase this if HLS clients disconnect frequently.
-hlsSegmentCount: 7
+# fmp4: mejor soporte de Chrome MSE, manejo limpio de discontinuidades del DVR
+# 2s + 10 segmentos = ventana de 20s (resiste throttling de Chrome en background)
+hlsVariant: fmp4
+hlsSegmentCount: 10
 # Minimum duration of each segment.
-hlsSegmentDuration: 1s
+hlsSegmentDuration: 2s
 # Minimum duration of the entire playlist.
 hlsPartDuration: 200ms
 # Maximum size of each segment.
