@@ -18,6 +18,11 @@ hlsAllowOrigin: "*"
 hlsVariant: fmp4
 hlsSegmentCount: 10
 hlsSegmentDuration: 2s
+# Mantener el muxer HLS siempre activo aunque no haya clientes conectados
+# Evita el "destroyed: not used anymore" y elimina el delay de reconexión
+hlsAlwaysRemux: true
+# Tiempo máximo sin lectores antes de destruir el muxer (24h = prácticamente nunca)
+hlsMuxerCloseAfter: 24h
 
 # WebRTC Server (nueva sintaxis)
 webrtc: true

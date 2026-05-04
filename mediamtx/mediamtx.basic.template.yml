@@ -50,6 +50,11 @@ hlsSegmentCount: 10
 hlsSegmentDuration: 2s
 hlsPartDuration: 200ms
 hlsSegmentMaxSize: 50M
+# Mantener el muxer HLS siempre activo aunque no haya clientes conectados
+# Evita el "destroyed: not used anymore" y elimina el delay de reconexión
+hlsAlwaysRemux: yes
+# Tiempo máximo sin lectores antes de destruir el muxer (24h = prácticamente nunca)
+hlsMuxerCloseAfter: 24h
 
 ###############################################
 # Servidor WebRTC
