@@ -22,7 +22,7 @@ RUN rm -f mediamtx.exe \
     && mv mediamtxorig.yml mediamtx.yml
 
 # Instalar dependencias de Node
-RUN npm ci
+RUN npm ci --include=dev
 
 WORKDIR /app
 # Construir la app Next.js
