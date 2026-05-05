@@ -44,10 +44,10 @@ hlsAllowOrigin: "*"
 hlsTrustedProxies: []
 hlsDirectory: ""
 # fmp4: mejor soporte de Chrome MSE, manejo limpio de discontinuidades del DVR
-# 2s + 10 segmentos = ventana de 20s (resiste throttling de Chrome en background)
+# 1s + 6 segmentos = ventana de 6s; segmentos cortos → granularidad de deriva ~1s
 hlsVariant: fmp4
-hlsSegmentCount: 10
-hlsSegmentDuration: 2s
+hlsSegmentCount: 6
+hlsSegmentDuration: 1s
 hlsPartDuration: 200ms
 hlsSegmentMaxSize: 50M
 # Mantener el muxer HLS siempre activo aunque no haya clientes conectados

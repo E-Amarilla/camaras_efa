@@ -229,11 +229,11 @@ hlsDirectory: ""
 # Number of HLS segments to keep on disk.
 # Increase this if HLS clients disconnect frequently.
 # fmp4: mejor soporte de Chrome MSE, manejo limpio de discontinuidades del DVR
-# 2s + 10 segmentos = ventana de 20s (resiste throttling de Chrome en background)
+# 1s + 6 segmentos = ventana de 6s; segmentos cortos → granularidad de deriva ~1s
 hlsVariant: fmp4
-hlsSegmentCount: 10
+hlsSegmentCount: 6
 # Minimum duration of each segment.
-hlsSegmentDuration: 2s
+hlsSegmentDuration: 1s
 # Minimum duration of the entire playlist.
 hlsPartDuration: 200ms
 # Maximum size of each segment.
